@@ -59,7 +59,10 @@ function AdminPage() {
       try {
         const svg = qrRef.current.querySelector('svg');
         if (!svg) return;
+        // Dynamically import heavy libraries only when needed
         const jsPDF = (await import('jspdf')).default;
+        // html2canvas is only needed if you use it elsewhere, otherwise remove this import
+        // const html2canvas = (await import('html2canvas')).default;
         const imgData = await svgToPngDataUrl(svg, 180, 180);
         const pdf = new jsPDF();
         pdf.addImage(imgData, 'PNG', 10, 10, 60, 60);
