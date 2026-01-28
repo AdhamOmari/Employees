@@ -354,7 +354,7 @@ function AdminPage() {
       <div ref={qrRef} className="flex flex-col items-center mb-6">
         {qrUser && qrUser.id && (
           <QRCodeSVG 
-            value={`http://192.168.1.217:5002/login?id=${encodeURIComponent(String(qrUser.id))}`} 
+            value={`${window.location.origin}/login?id=${encodeURIComponent(String(qrUser.id))}`}
             size={180} 
           />
         )}
