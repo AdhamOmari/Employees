@@ -10,6 +10,8 @@ import { useLocation } from "wouter";
 import { useStore } from "@/lib/mock-data";
 import ExcelUpload, { UploadedUser } from '@/components/ui/excel-upload';
 import { updateUserStatusRealtime, fetchUploadedUsersRealtime } from '@/lib/realtime-upload';
+import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
+import { app } from '@/lib/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -19,15 +21,25 @@ import LanguageToggle from '@/components/ui/language-toggle';
 import { motion } from "framer-motion";
 
 export default function LoginPage() {
-  // Handler for admin login form
-  const handleLogin = (e: React.FormEvent) => {
+  // Handler for admin login form (uses Firebase Authentication)
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Simple hardcoded check for demo
-    if (email === "admin@secure.com" && password === "admin123") {
+    setError("");
+    try {
+      // Only allow the specific admin email
+        const allowedAdminEmail = "adhamomarics@gmail.com"; // <-- fixed admin email
+      if (email.trim().toLowerCase() !== allowedAdminEmail) {
+        setError(t('invalidLogin', 'Only the authorized admin can log in.'));
+        return;
+      }
+      const auth = getAuth(app);
+      console.log("Entered email:", email.trim().toLowerCase());
+console.log("Allowed email:", allowedAdminEmail);
+      await signInWithEmailAndPassword(auth, email, password);
       setError("");
       setLocation("/admin");
-    } else {
-      setError(t('invalidLogin', 'Invalid email or password. Hint: admin@secure.com / admin123'));
+    } catch (err: any) {
+      setError(t('invalidLogin', 'Invalid email or password.'));
     }
   };
 
@@ -216,7 +228,6 @@ export default function LoginPage() {
                   <Input 
                     id="email"
                     type="email"
-                    placeholder={t('emailPlaceholder', 'admin@secure.com')}
                     className="pl-10 h-12 border-zinc-200 focus:ring-zinc-900"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
@@ -231,7 +242,6 @@ export default function LoginPage() {
                   <Input 
                     id="password"
                     type="password"
-                    placeholder={t('passwordPlaceholder', '••••••••')}
                     className="pl-10 h-12 border-zinc-200 focus:ring-zinc-900"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}

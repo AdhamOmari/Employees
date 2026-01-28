@@ -2,6 +2,17 @@ import React, { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Upload, Trash2 } from 'lucide-react';
 import { uploadUsersToRealtimeDB, deleteAllUploadedUsersRealtime, fetchUploadedUsersRealtime } from '@/lib/realtime-upload';
+import {
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogFooter,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogAction,
+  AlertDialogCancel,
+} from '@/components/ui/alert-dialog';
 import * as XLSX from 'xlsx';
 
 export interface UploadedUser {
@@ -57,11 +68,13 @@ export default function ExcelUpload({ onData }: { onData: (users: UploadedUser[]
 
   const { t, i18n } = useTranslation();
   const dir = i18n.language === 'ar' ? 'rtl' : 'ltr';
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const handleDelete = async () => {
     setDeleteLoading(true);
     try {
       await deleteAllUploadedUsersRealtime();
       onData(null as any); // Set to null so parent hides the table
+      setConfirmOpen(false);
     } finally {
       setDeleteLoading(false);
     }
@@ -95,16 +108,57 @@ export default function ExcelUpload({ onData }: { onData: (users: UploadedUser[]
           {t('uploading', 'Uploading...')}
         </span>
       )}
-      <button
-        type="button"
-        onClick={handleDelete}
-        className="px-4 py-2 bg-red-600 text-white rounded shadow hover:bg-red-700 flex items-center gap-2"
-        dir={dir}
-        disabled={deleteLoading}
+<AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+  <AlertDialogTrigger asChild>
+    <button
+      type="button"
+      className="px-4 py-2 bg-red-600 text-white rounded-lg shadow hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 transition-colors"
+      dir={dir}
+      disabled={deleteLoading}
+    >
+      <Trash2  />
+      <span>{deleteLoading ? t('deleting', 'Deleting...') : t('deleteUploadedData', 'Delete Uploaded Data')}</span>
+    </button>
+  </AlertDialogTrigger>
+  
+  <AlertDialogContent dir={dir} className={dir === 'rtl' ? 'text-right' : 'text-left'}>
+    <AlertDialogHeader className={dir === 'rtl' ? 'text-right' : 'text-left'}>
+      <AlertDialogTitle className={dir === 'rtl' ? 'text-right' : 'text-left'}>
+        {t('confirmDeleteTitle', 'Delete All Uploaded Data?')}
+      </AlertDialogTitle>
+      <AlertDialogDescription className={`text-sm text-zinc-600 mt-2 ${dir === 'rtl' ? 'text-right' : 'text-left'}`}>
+        {t('confirmDeleteDesc', 'Are you sure you want to delete all uploaded users? This action cannot be undone.')}
+      </AlertDialogDescription>
+    </AlertDialogHeader>
+    
+    <AlertDialogFooter 
+      className={`flex gap-2 mt-6 ${dir === 'rtl' ? 'flex-row-reverse' : 'flex-row'}`}
+      dir={dir}
+    >
+      <AlertDialogCancel 
+        className="px-4 py-2 border border-zinc-300 rounded-lg hover:bg-zinc-50 transition-colors"
       >
-        <Trash2 className="w-5 h-5" />
-        {deleteLoading ? t('deleting', 'Deleting...') : t('deleteUploadedData', 'Delete Uploaded Data')}
-      </button>
+        {t('cancel', 'Cancel')}
+      </AlertDialogCancel>
+      
+      <AlertDialogAction asChild>
+        <button 
+          onClick={handleDelete} 
+          disabled={deleteLoading} 
+          className="px-4 py-2 bg-red-600 text-white rounded-lg shadow hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+        >
+          {deleteLoading && (
+            <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+          )}
+          <span>{deleteLoading ? t('deleting', 'Deleting...') : t('confirm', 'Yes, Delete')}</span>
+        </button>
+      </AlertDialogAction>
+    </AlertDialogFooter>
+  </AlertDialogContent>
+</AlertDialog>
     </div>
   );
 }

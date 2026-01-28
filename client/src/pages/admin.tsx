@@ -11,39 +11,81 @@ import { Search, ArrowLeft, Download, Users, Activity, Clock } from "lucide-reac
 import ExcelUpload, { UploadedUser } from '@/components/ui/excel-upload';
 import { fetchUploadedUsersRealtime } from '@/lib/realtime-upload';
 import { useEffect, useRef } from 'react';
+import { getAuth, onAuthStateChanged, signOut } from "firebase/auth";
+import { app } from '@/lib/firebase';
 import { QRCodeSVG } from 'qrcode.react';
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import LanguageToggle from "@/components/ui/language-toggle";
 
 function AdminPage() {
+  // Auth state
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [authChecked, setAuthChecked] = useState(false);
+  const [authError, setAuthError] = useState("");
     // QR Dialog state and handlers
     const [qrUser, setQRUser] = useState<UploadedUser | null>(null);
     const qrRef = useRef<HTMLDivElement>(null);
     const handleOpenQR = (user: UploadedUser) => setQRUser(user);
     const handleCloseQR = () => setQRUser(null);
-    // Save as PDF
+    // Convert SVG to PNG using a canvas
+    const svgToPngDataUrl = (svgElement, width = 256, height = 256) => {
+      return new Promise((resolve, reject) => {
+        const svgString = new XMLSerializer().serializeToString(svgElement);
+        const img = new window.Image();
+        const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
+        const url = URL.createObjectURL(svgBlob);
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+          URL.revokeObjectURL(url);
+          resolve(canvas.toDataURL('image/png'));
+        };
+        img.onerror = reject;
+        img.src = url;
+      });
+    };
+
+    // Loading state for download actions
+    const [qrLoading, setQrLoading] = useState<'none' | 'pdf' | 'img'>('none');
+
+    // Save as PDF (SVG to PNG to PDF)
     const handleSavePDF = async () => {
       if (!qrRef.current || !qrUser) return;
-      const html2canvas = (await import('html2canvas')).default;
-      const jsPDF = (await import('jspdf')).default;
-      const canvas = await html2canvas(qrRef.current);
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF();
-      pdf.addImage(imgData, 'PNG', 10, 10, 60, 60);
-      pdf.text(`ID: ${qrUser.id}`, 10, 80);
-      pdf.text(`Name: ${qrUser.name}`, 10, 90);
-      pdf.save(`${qrUser.name || 'user'}-qr.pdf`);
+      setQrLoading('pdf');
+      try {
+        const svg = qrRef.current.querySelector('svg');
+        if (!svg) return;
+        const jsPDF = (await import('jspdf')).default;
+        const imgData = await svgToPngDataUrl(svg, 180, 180);
+        const pdf = new jsPDF();
+        pdf.addImage(imgData, 'PNG', 10, 10, 60, 60);
+        pdf.text(`ID: ${qrUser.id}`, 10, 80);
+        pdf.text(`Name: ${qrUser.name}`, 10, 90);
+        pdf.save(`${qrUser.name || 'user'}-qr.pdf`);
+      } finally {
+        setQrLoading('none');
+      }
     };
-    // Download QR as image
-    const handleDownloadQR = () => {
+
+    // Download QR as PNG (SVG to PNG)
+    const handleDownloadQR = async () => {
       if (!qrRef.current || !qrUser) return;
-      const img = qrRef.current.querySelector('img') as HTMLImageElement;
-      if (!img) return;
-      const a = document.createElement('a');
-      a.href = img.src;
-      a.download = `${qrUser.name || 'user'}-qr.png`;
-      a.click();
+      setQrLoading('img');
+      try {
+        const svg = qrRef.current.querySelector('svg');
+        if (!svg) return;
+        const imgData = await svgToPngDataUrl(svg, 180, 180);
+        const a = document.createElement('a');
+        a.href = imgData;
+        a.download = `${qrUser.name || 'user'}-qr.png`;
+        a.click();
+      } finally {
+        setQrLoading('none');
+      }
     };
   const { t, i18n } = useTranslation();
   const store = useStore();
@@ -53,12 +95,34 @@ function AdminPage() {
 
   // Uploaded users state
   const [uploadedUsers, setUploadedUsers] = useState<UploadedUser[] | null>(null);
-  // Fetch uploaded users from Firebase on mount and poll every 2 seconds
+  // Auth and data fetch logic
   useEffect(() => {
+    const auth = getAuth(app);
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user && user.email) {
+        setIsAdmin(true);
+        setAuthChecked(true);
+        setAuthError("");
+      } else {
+        setIsAdmin(false);
+        setAuthChecked(true);
+        setAuthError("You must be logged in as an authorized admin to access the admin dashboard.");
+      }
+    });
+    return () => unsubscribe();
+  }, []);
+
+  // Fetch uploaded users only if admin
+  useEffect(() => {
+    if (!isAdmin) return;
     let active = true;
     const fetchAndSet = async () => {
-      const users = await fetchUploadedUsersRealtime();
-      if (active) setUploadedUsers(users as UploadedUser[]);
+      try {
+        const users = await fetchUploadedUsersRealtime();
+        if (active) setUploadedUsers(users as UploadedUser[]);
+      } catch (err) {
+        if (active) setAuthError("Permission denied. Please make sure you are logged in as Admin@employee.com.");
+      }
     };
     fetchAndSet();
     const interval = setInterval(fetchAndSet, 2000);
@@ -66,7 +130,7 @@ function AdminPage() {
       active = false;
       clearInterval(interval);
     };
-  }, []);
+  }, [isAdmin]);
 
   // Employees and logs from uploadedUsers (Firebase)
   const employees = (uploadedUsers || []).filter(u => u.status === 'IN');
@@ -109,6 +173,45 @@ function AdminPage() {
   );
 
   const dir = i18n.language === 'ar' ? 'rtl' : 'ltr';
+  if (!authChecked) {
+    return (
+<div className="min-h-screen flex items-center justify-center bg-black text-white" dir={dir}>
+  <div className="flex flex-col items-center gap-6">
+    {/* Loading Spinner */}
+    <div className="relative">
+      <div className="w-16 h-16 border-4 border-zinc-800 border-t-white rounded-full animate-spin"></div>
+    </div>
+    
+    {/* Loading Text */}
+    <div className="text-center space-y-2">
+      <h2 className="text-xl font-semibold text-white">
+        {t('loadingAuthentication', 'Loading authentication...')}
+      </h2>
+      <p className="text-sm text-zinc-400">
+        {t('pleaseWait', 'Please wait a moment')}
+      </p>
+    </div>
+    
+    {/* Animated Dots */}
+    <div className="flex gap-2">
+      <div className="w-2 h-2 bg-white rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+      <div className="w-2 h-2 bg-white rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+      <div className="w-2 h-2 bg-white rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+    </div>
+  </div>
+</div>
+    );
+  }
+  if (!isAdmin) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-zinc-50 text-zinc-900">
+        <div className="bg-white p-8 rounded shadow text-center">
+          <div className="text-red-600 font-bold mb-4">{authError}</div>
+          <Button onClick={() => window.location.href = '/login'}>Go to Login</Button>
+        </div>
+      </div>
+    );
+  }
   return (
     <div className={`min-h-screen bg-zinc-50 font-sans text-zinc-900`} dir={dir}>
       {/* Top Navigation */}
@@ -130,7 +233,12 @@ function AdminPage() {
       <Button
         variant="outline"
         className="text-xs px-3 py-1 border-zinc-300"
-        onClick={() => setLocation('/login')}
+        onClick={async () => {
+          const auth = getAuth(app);
+          await signOut(auth);
+          setIsAdmin(false);
+          setLocation('/login');
+        }}
       >
         {t('logout', 'Logout')}
       </Button>
@@ -229,23 +337,65 @@ function AdminPage() {
           )}
                   {/* QR Dialog */}
                   {qrUser && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-                      <div className="bg-white rounded-lg shadow-lg p-8 relative w-full max-w-xs flex flex-col items-center">
-                        <button onClick={handleCloseQR} className="absolute top-2 right-2 text-zinc-400 hover:text-zinc-900">✕</button>
-                        <div ref={qrRef} className="flex flex-col items-center mb-4">
-                          <QRCodeSVG value={`http://192.168.1.217:5002/login?id=${encodeURIComponent(qrUser.id)}`} size={180} />
-                          <div className="mt-2 text-center">
-                            <div className="font-bold">{qrUser.name}</div>
-                            <div className="text-xs text-zinc-500">{t('userId', 'ID')}: {qrUser.id}</div>
-                            <div className="text-xs text-blue-500 break-all mt-1">{`http://192.168.1.217:5002/login?id=${encodeURIComponent(qrUser.id)}`}</div>
-                          </div>
-                        </div>
-                        <div className="flex gap-2 w-full">
-                          <Button className="flex-1" onClick={handleSavePDF}>{t('saveAsPDF', 'Save as PDF')}</Button>
-                          <Button className="flex-1" variant="outline" onClick={handleDownloadQR}>{t('download', 'Download')}</Button>
-                        </div>
-                      </div>
-                    </div>
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" dir={dir}>
+  <div className="bg-white rounded-lg shadow-lg p-8 relative w-full max-w-xs flex flex-col items-center">
+    {/* Close button - positioned correctly for RTL/LTR */}
+    <button 
+      onClick={handleCloseQR} 
+      className={`absolute top-2 ${dir === 'rtl' ? 'left-2' : 'right-2'} text-zinc-400 hover:text-zinc-900 text-xl w-8 h-8 flex items-center justify-center rounded-full hover:bg-zinc-100 transition-colors`}
+    >
+      ✕
+    </button>
+    
+    {/* QR Code and Info */}
+      <div ref={qrRef} className="flex flex-col items-center mb-6">
+        {qrUser && qrUser.id && (
+          <QRCodeSVG 
+            value={`http://192.168.1.217:5002/login?id=${encodeURIComponent(String(qrUser.id))}`} 
+            size={180} 
+          />
+        )}
+        <div className="mt-4 text-center">
+          <div className="font-bold text-lg text-zinc-900">{qrUser.name}</div>
+          <div className="text-sm text-zinc-600 mt-1">
+            {t('userId', 'ID')}: {qrUser.id}
+          </div>
+
+        </div>
+      </div>
+    
+            {/* Action Buttons */}
+            <div className="flex gap-2 w-full">
+              <Button 
+                className="flex-1 flex items-center justify-center gap-2" 
+                onClick={handleSavePDF}
+                disabled={qrLoading === 'pdf'}
+              >
+                {qrLoading === 'pdf' ? (
+                  <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                  </svg>
+                ) : null}
+                {t('saveAsPDF', 'Save as PDF')}
+              </Button>
+              <Button 
+                className="flex-1 flex items-center justify-center gap-2" 
+                variant="outline" 
+                onClick={handleDownloadQR}
+                disabled={qrLoading === 'img'}
+              >
+                {qrLoading === 'img' ? (
+                  <svg className="animate-spin h-5 w-5 text-zinc-900" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                  </svg>
+                ) : null}
+                {t('download', 'Download')}
+              </Button>
+            </div>
+          </div>
+        </div>
                   )}
           <div className={`flex items-center justify-between ${dir === 'rtl' ? 'flex-row-reverse' : ''}`} dir={dir}>
             <div className="relative w-72" dir={dir}>
