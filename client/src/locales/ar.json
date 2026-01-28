@@ -1,0 +1,78 @@
+{
+  "alreadyLoggedIn": "لقد قمت بتسجيل الدخول بالفعل.",
+  "scanToLogOut": "امسح مرة أخرى لتسجيل الخروج.",
+  "notLoggedIn": "لم تقم بتسجيل الدخول.",
+  "scanToLogIn": "امسح مرة أخرى لتسجيل الدخول.",
+  "loggedOut": "تم تسجيل خروجك.",
+  "loggedIn": "تم تسجيل دخولك.",
+  "userLogin": "تسجيل دخول المستخدم",
+  "userId": "المعرف",
+  "checkIn": "تسجيل دخول",
+  "checkOut": "تسجيل خروج",
+  "qrInstruction": "امسح رمز الاستجابة السريعة الخاص بك لتسجيل الدخول أو الخروج.",
+  "password": "كلمة المرور",
+  "passwordPlaceholder": "••••••••",
+  "signInDashboard": "تسجيل الدخول إلى لوحة التحكم",
+  "welcome": "مرحبًا بك في متتبع إشغال الغرف!",
+  "login": "تسجيل الدخول",
+  "logout": "تسجيل الخروج",
+  "admin": "لوحة الإدارة",
+  "kiosk": "وضع الكشك",
+  "notFound": "الصفحة غير موجودة",
+  "language": "اللغة",
+  "submit": "إرسال",
+  "cancel": "إلغاء"
+  ,"secureAccess": "التحكم الآمن في الدخول"
+  ,"scanToAccess": "امسح للدخول إلى الغرفة"
+  ,"occupancyStatus": "حالة الإشغال"
+  ,"invalidLogin": "البريد الإلكتروني أو كلمة المرور غير صحيحة. تلميح: admin@secure.com / admin123"
+  ,"adminLogin": "تسجيل دخول المسؤول"
+  ,"enterCredentials": "أدخل بيانات الاعتماد للوصول إلى لوحة التحكم"
+  ,"secureAuth": "مصادقة آمنة"
+  ,"managedBy": "تدار بواسطة بنية SecureAccess التحتية"
+  ,"emailAddress": "عنوان البريد الإلكتروني"
+  ,"emailPlaceholder": "admin@secure.com"
+  ,"adminDashboard": "لوحة تحكم المسؤول"
+  ,"secureManager": "مدير SecureAccess"
+  ,"liveSystemActive": "النظام يعمل الآن"
+  ,"notFoundTitle": "404 الصفحة غير موجودة"
+  ,"notFoundHint": "هل نسيت إضافة الصفحة إلى جهاز التوجيه؟"
+  ,"enterEmployee": "أدخل اسم الموظف..."
+  ,"checkInOut": "تسجيل دخول/خروج"
+  ,"showQR": "عرض رمز الاستجابة السريعة"
+  ,"accessAdmin": "الوصول إلى لوحة تحكم المسؤول"
+  ,"currentOccupancy": "الإشغال الحالي"
+  ,"totalEntriesToday": "إجمالي الدخولات اليوم"
+  ,"refusalsFull": "الرفض (ممتلئ)"
+  ,"searchEmployees": "ابحث عن الموظفين..."
+  ,"exportReport": "تصدير التقرير"
+  ,"currentlyInside": "الموجودون حالياً"
+  ,"accessLogs": "سجلات الدخول"
+  ,"activePersonnel": "الأشخاص النشطون"
+  ,"activePersonnelDesc": "قائمة الموظفين الموجودين حالياً في الغرفة الآمنة."
+  ,"employeeName": "اسم الموظف"
+  ,"checkinTime": "وقت الدخول"
+  ,"duration": "المدة"
+  ,"status": "الحالة"
+  ,"noEmployeesInside": "لا يوجد موظفون حالياً بالداخل."
+  ,"active": "نشط"
+  ,"inside": "بالداخل"
+  ,"accessHistory": "سجل الوصول"
+  ,"accessHistoryDesc": "سجل كامل لجميع أحداث الدخول والخروج."
+  ,"timestamp": "الطابع الزمني"
+  ,"eventType": "نوع الحدث"
+  ,"in": "دخول"
+  ,"out": "خروج"
+  ,"denied": "مرفوض",
+  "uploadExcelFile": "تحميل ملف إكسل"
+  ,"uploadedUsers": "المستخدمون المرفوعون"
+  ,"uploadedUsersDesc": "جدول المستخدمين من ملف إكسل المرفوع. انقر على QR للعرض والتحميل."
+  ,"id": "المعرف"
+  ,"name": "الاسم"
+  ,"qr": "QR"
+  ,"uploading": "جاري الرفع..."
+  ,"deleting": "جاري الحذف..."
+  ,"deleteUploadedData": "حذف البيانات المرفوعة"
+  ,"saveAsPDF": "حفظ كملف PDF"
+  ,"download": "تنزيل"
+}

@@ -1,0 +1,104 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --radius-sm: 0.3rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+
+  /* Corporate Slate Theme - Professional & Trustworthy */
+  --color-background: hsl(210 40% 98%);
+  --color-foreground: hsl(222 47% 11%);
+
+  --color-card: hsl(0 0% 100%);
+  --color-card-foreground: hsl(222 47% 11%);
+
+  --color-popover: hsl(0 0% 100%);
+  --color-popover-foreground: hsl(222 47% 11%);
+
+  /* Primary Blue - Reliable */
+  --color-primary: hsl(221 83% 53%);
+  --color-primary-foreground: hsl(210 40% 98%);
+
+  /* Secondary Slate - Supporting */
+  --color-secondary: hsl(210 40% 96.1%);
+  --color-secondary-foreground: hsl(222 47% 11.2%);
+
+  /* Muted - Subtle */
+  --color-muted: hsl(210 40% 96.1%);
+  --color-muted-foreground: hsl(215 16% 47%);
+
+  /* Accent - Highlight */
+  --color-accent: hsl(210 40% 96.1%);
+  --color-accent-foreground: hsl(222 47% 11.2%);
+
+  /* Destructive - Errors */
+  --color-destructive: hsl(0 84.2% 60.2%);
+  --color-destructive-foreground: hsl(210 40% 98%);
+
+  /* Border & Input */
+  --color-border: hsl(214 32% 91%);
+  --color-input: hsl(214 32% 91%);
+  --color-ring: hsl(221 83% 53%);
+
+  /* Chart Colors */
+  --color-chart-1: hsl(221 83% 53%);
+  --color-chart-2: hsl(173 58% 39%);
+  --color-chart-3: hsl(197 37% 24%);
+  --color-chart-4: hsl(43 74% 66%);
+  --color-chart-5: hsl(27 87% 67%);
+
+  --color-sidebar: hsl(222 47% 11%);
+  --color-sidebar-foreground: hsl(210 40% 98%);
+  --color-sidebar-primary: hsl(221 83% 53%);
+  --color-sidebar-primary-foreground: hsl(0 0% 100%);
+  --color-sidebar-accent: hsl(217 33% 17%);
+  --color-sidebar-accent-foreground: hsl(210 40% 98%);
+  --color-sidebar-border: hsl(217 33% 17%);
+  --color-sidebar-ring: hsl(224 76% 48%);
+
+  --font-sans: 'Inter', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  html {
+    font-size: clamp(14px, 2vw, 18px);
+  }
+  body {
+    @apply font-sans antialiased bg-background text-foreground;
+    line-height: 1.6;
+  }
+  h1 {
+    font-size: clamp(2rem, 4vw, 2.5rem);
+    font-weight: 700;
+  }
+  h2 {
+    font-size: clamp(1.5rem, 3vw, 2rem);
+    font-weight: 600;
+  }
+  h3 {
+    font-size: clamp(1.25rem, 2.5vw, 1.5rem);
+    font-weight: 600;
+  }
+  .text-lg {
+    font-size: clamp(1.125rem, 2vw, 1.25rem);
+  }
+  .text-xl {
+    font-size: clamp(1.25rem, 2.5vw, 1.5rem);
+  }
+  .text-2xl {
+    font-size: clamp(1.5rem, 3vw, 2rem);
+  }
+  .text-3xl {
+    font-size: clamp(1.875rem, 4vw, 2.25rem);
+  }
+  .text-4xl {
+    font-size: clamp(2.25rem, 5vw, 2.5rem);
+  }
+}
