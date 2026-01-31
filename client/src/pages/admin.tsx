@@ -66,7 +66,7 @@ function AdminPage() {
         const imgData = await svgToPngDataUrl(svg, 180, 180);
         const pdf = new jsPDF();
         pdf.addImage(imgData, 'PNG', 10, 10, 60, 60);
-        pdf.text(`ID: ${qrUser.id}`, 10, 80);
+        pdf.text(`Iqama: ${qrUser.Iqama}`, 10, 80);
         pdf.text(`Name: ${qrUser.name}`, 10, 90);
         pdf.save(`${qrUser.name || 'user'}-qr.pdf`);
       } finally {
@@ -98,6 +98,7 @@ function AdminPage() {
 
   // Uploaded users state
   const [uploadedUsers, setUploadedUsers] = useState<UploadedUser[] | null>(null);
+  const [searchUploadedUsers, setSearchUploadedUsers] = useState("");
   // Auth and data fetch logic
   useEffect(() => {
     const auth = getAuth(app);
@@ -143,7 +144,7 @@ function AdminPage() {
     uploadedUsers.forEach(u => {
       if (u.loginTime) {
         logs.push({
-          id: u.id + '-login',
+          id: u.Iqama + '-login',
           name: u.name,
           action: 'IN',
           timestamp: u.loginTime
@@ -151,7 +152,7 @@ function AdminPage() {
       }
       if (u.logoutTime) {
         logs.push({
-          id: u.id + '-logout',
+          id: u.Iqama + '-logout',
           name: u.name,
           action: 'OUT',
           timestamp: u.logoutTime
@@ -288,56 +289,79 @@ function AdminPage() {
 
         {/* Main Content Tabs */}
         <div className={`space-y-6 ${dir === 'rtl' ? 'text-right' : ''}`} dir={dir}>
-          {/* Excel Upload and Uploaded Users Table */}
+          {/* Tabs: Active Personnel and Logs */}
+          <Tabs defaultValue="current" className="w-full">
+            {/* ...existing code for TabsList, TabsContent... */}
+          </Tabs>
+          {/* Uploaded Users Table - now shown after the tabs */}
           <div className="mb-8">
             <ExcelUpload onData={setUploadedUsers} />
-          </div>
-          {uploadedUsers && (
-            <Card className="shadow-sm border-zinc-200 mb-8">
-              <CardHeader>
-                <CardTitle>{t('uploadedUsers', 'Uploaded Users')}</CardTitle>
-                <CardDescription>{t('uploadedUsersDesc', 'Table of users from uploaded Excel file. Click QR to view and download.')}</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className={dir === 'rtl' ? 'text-right' : 'text-left'}>{t('id', 'ID')}</TableHead>
-                      <TableHead className="text-center">{t('name', 'Name')}</TableHead>
-                      <TableHead className="text-center">{t('status', 'Status')}</TableHead>
-                      <TableHead className="text-center">{t('loginTime', 'Login Time')}</TableHead>
-                      <TableHead className="text-center">{t('logoutTime', 'Logout Time')}</TableHead>
-                      <TableHead className={dir === 'rtl' ? 'text-left' : 'text-right'}>{t('qr', 'QR')}</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {uploadedUsers.map((user) => (
-                      <TableRow key={user.id}>
-                        <TableCell className={dir === 'rtl' ? 'text-right' : 'text-left'}>{user.id}</TableCell>
-                        <TableCell className="text-center">{user.name}</TableCell>
-                        <TableCell className="text-center">
-                          <Badge className={user.status === 'IN' ? 'bg-emerald-100 text-emerald-700 border-emerald-200' : 'bg-blue-100 text-blue-700 border-blue-200'}>
-                            {t(user.status === 'IN' ? 'inside' : 'outside', user.status)}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-center text-xs text-zinc-500">
-                          {user.loginTime ? format(new Date(user.loginTime), 'PPp') : '-'}
-                        </TableCell>
-                        <TableCell className="text-center text-xs text-zinc-500">
-                          {user.logoutTime ? format(new Date(user.logoutTime), 'PPp') : '-'}
-                        </TableCell>
-                        <TableCell className={dir === 'rtl' ? 'text-left' : 'text-right'}>
-                          <Button size="sm" variant="outline" onClick={() => handleOpenQR(user)}>
-                            {t('qr', 'QR')}
-                          </Button>
-                        </TableCell>
+            {uploadedUsers && (
+              <Card className="shadow-sm border-zinc-200 mt-4">
+                <CardHeader>
+                  <CardTitle>{t('uploadedUsers', 'Uploaded Users')}</CardTitle>
+                  <CardDescription>{t('uploadedUsersDesc', 'Table of users from uploaded Excel file. Click QR to view and download.')}</CardDescription>
+                  <div className="relative w-72 mt-4" dir={dir}>
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 w-4 h-4" />
+                    <Input
+                      placeholder={t('searchUploadedUsers', 'Search uploaded users...')}
+                      value={searchUploadedUsers}
+                      onChange={e => setSearchUploadedUsers(e.target.value)}
+                      className="pl-9 bg-white border-zinc-200"
+                    />
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className={dir === 'rtl' ? 'text-right' : 'text-left'}>{t('iqama', 'Iqama')}</TableHead>
+                        <TableHead className="text-center">{t('name', 'Name')}</TableHead>
+                        <TableHead className="text-center">{t('status', 'Status')}</TableHead>
+                        <TableHead className="text-center">{t('passport', 'Passport')}</TableHead>
+                        <TableHead className="text-center">{t('nationality', 'Nationality')}</TableHead>
+                        <TableHead className="text-center">{t('loginTime', 'Login Time')}</TableHead>
+                        <TableHead className="text-center">{t('logoutTime', 'Logout Time')}</TableHead>
+                        <TableHead className={dir === 'rtl' ? 'text-left' : 'text-right'}>{t('qr', 'QR')}</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-          )}
+                    </TableHeader>
+                    <TableBody>
+                      {uploadedUsers.filter(user =>
+                        user.name.toLowerCase().includes(searchUploadedUsers.toLowerCase()) ||
+                        user.Iqama.toLowerCase().includes(searchUploadedUsers.toLowerCase()) ||
+                        (user.Passport && user.Passport.toLowerCase().includes(searchUploadedUsers.toLowerCase())) ||
+                        (user.Nationality && user.Nationality.toLowerCase().includes(searchUploadedUsers.toLowerCase()))
+                      ).map((user) => (
+                        <TableRow key={user.Iqama}>
+                          <TableCell className={dir === 'rtl' ? 'text-right' : 'text-left'}>{user.Iqama}</TableCell>
+                          <TableCell className="text-center">{user.name}</TableCell>
+                          <TableCell className="text-center">
+                            <Badge className={user.status === 'IN' ? 'bg-emerald-100 text-emerald-700 border-emerald-200' : 'bg-blue-100 text-blue-700 border-blue-200'}>
+                              {t(user.status === 'IN' ? 'inside' : 'outside', user.status)}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-center text-xs text-zinc-500">{user.Passport || '-'}</TableCell>
+                          <TableCell className="text-center text-xs text-zinc-500">{user.Nationality || '-'}</TableCell>
+                          <TableCell className="text-center text-xs text-zinc-500">
+                            {user.loginTime ? format(new Date(user.loginTime), 'PPp') : '-'}
+                          </TableCell>
+                          <TableCell className="text-center text-xs text-zinc-500">
+                            {user.logoutTime ? format(new Date(user.logoutTime), 'PPp') : '-'}
+                          </TableCell>
+                          <TableCell className={dir === 'rtl' ? 'text-left' : 'text-right'}>
+                            <Button size="sm" variant="outline" onClick={() => handleOpenQR(user)}>
+                              {t('qr', 'QR')}
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+                 
                   {/* QR Dialog */}
                   {qrUser && (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" dir={dir}>
@@ -352,16 +376,16 @@ function AdminPage() {
     
     {/* QR Code and Info */}
       <div ref={qrRef} className="flex flex-col items-center mb-6">
-        {qrUser && qrUser.id && (
+        {qrUser && qrUser.Iqama && (
           <QRCodeSVG 
-            value={`${window.location.origin}/login?id=${encodeURIComponent(String(qrUser.id))}`}
+            value={`${window.location.origin}/login?iqama=${encodeURIComponent(String(qrUser.Iqama))}`}
             size={180} 
           />
         )}
         <div className="mt-4 text-center">
           <div className="font-bold text-lg text-zinc-900">{qrUser.name}</div>
           <div className="text-sm text-zinc-600 mt-1">
-            {t('userId', 'ID')}: {qrUser.id}
+            {t('userIqama', 'Iqama')}: {qrUser.Iqama}
           </div>
 
         </div>
@@ -437,7 +461,9 @@ function AdminPage() {
                   <Table>
                     <TableHeader>
                       <TableRow className="hover:bg-zinc-50 border-zinc-100">
-                        <TableHead className={dir === 'rtl' ? 'text-right w-[300px]' : 'text-left w-[300px]'}>{t('employeeName', 'Employee Name')}</TableHead>
+                        <TableHead className={dir === 'rtl' ? 'text-right w-[200px]' : 'text-left w-[200px]'}>{t('employeeName', 'Employee Name')}</TableHead>
+                        <TableHead className="text-center">{t('passport', 'Passport')}</TableHead>
+                        <TableHead className="text-center">{t('nationality', 'Nationality')}</TableHead>
                         <TableHead className={dir === 'rtl' ? 'text-left' : 'text-right'}>{t('status', 'Status')}</TableHead>
                         <TableHead className="text-center">{t('checkinTime', 'Check-in Time')}</TableHead>
                         <TableHead className="text-center">{t('duration', 'Duration')}</TableHead>
@@ -446,7 +472,7 @@ function AdminPage() {
                     <TableBody>
                       {filteredEmployees.length === 0 ? (
                         <TableRow>
-                          <TableCell colSpan={4} className="h-32 text-center text-zinc-500">
+                          <TableCell colSpan={6} className="h-32 text-center text-zinc-500">
                             {t('noEmployeesInside', 'No employees currently inside.')}
                           </TableCell>
                         </TableRow>
@@ -454,6 +480,8 @@ function AdminPage() {
                         filteredEmployees.map((employee) => (
                           <TableRow key={employee.name} className="hover:bg-zinc-50 border-zinc-100">
                             <TableCell className={dir === 'rtl' ? 'text-right font-medium text-zinc-900' : 'text-left font-medium text-zinc-900'}>{employee.name}</TableCell>
+                            <TableCell className="text-center text-xs text-zinc-500">{employee.Passport || '-'}</TableCell>
+                            <TableCell className="text-center text-xs text-zinc-500">{employee.Nationality || '-'}</TableCell>
                             <TableCell className={dir === 'rtl' ? 'text-left' : 'text-right'}>
                               <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 border-emerald-200">{t('inside', 'Inside')}</Badge>
                             </TableCell>
@@ -489,23 +517,31 @@ function AdminPage() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {filteredLogs.map((log) => (
-                        <TableRow key={log.id} className="hover:bg-zinc-50 border-zinc-100">
-                          <TableCell className="font-mono text-xs text-zinc-500">
-                            {format(new Date(log.timestamp), "PPp")}
-                          </TableCell>
-                          <TableCell className="font-medium text-zinc-900">{log.name}</TableCell>
-                          <TableCell>
-                            <Badge variant="outline" className={`
-                              ${log.action === 'IN' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : ''}
-                              ${log.action === 'OUT' ? 'bg-blue-50 text-blue-700 border-blue-200' : ''}
-                              ${log.action === 'DENIED' ? 'bg-red-50 text-red-700 border-red-200' : ''}
-                            `}>
-                              {typeof log.action === 'string' ? t(log.action.toLowerCase(), log.action) : log.action}
-                            </Badge>
+                      {/* Show all uploaded users as logs for now */}
+                      {uploadedUsers && uploadedUsers.length > 0 ? (
+                        uploadedUsers.map((user) => (
+                          <TableRow key={user.Iqama} className="hover:bg-zinc-50 border-zinc-100">
+                            <TableCell className="font-mono text-xs text-zinc-500">
+                              {user.loginTime ? format(new Date(user.loginTime), "PPp") : '-'}
+                            </TableCell>
+                            <TableCell className="font-medium text-zinc-900">{user.name}</TableCell>
+                            <TableCell>
+                              <Badge variant="outline" className={`
+                                ${user.status === 'IN' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : ''}
+                                ${user.status === 'OUT' ? 'bg-blue-50 text-blue-700 border-blue-200' : ''}
+                              `}>
+                                {t(user.status === 'IN' ? 'inside' : 'outside', user.status)}
+                              </Badge>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      ) : (
+                        <TableRow>
+                          <TableCell colSpan={3} className="h-32 text-center text-zinc-500">
+                            {t('noLogs', 'No logs available.')}
                           </TableCell>
                         </TableRow>
-                      ))}
+                      )}
                     </TableBody>
                   </Table>
                 </CardContent>

@@ -11,11 +11,13 @@ import { app } from "./firebase";
 const db = getDatabase(app);
 
 export const uploadUsersToRealtimeDB = async (users) => {
-  // Save each user under /uploadedUsers/{id}
+  // Save each user under /uploadedUsers/{Iqama}
   const promises = users.map((user) =>
-    set(ref(db, `uploadedUsers/${user.id}`), {
-      id: user.id,
+    set(ref(db, `uploadedUsers/${user.Iqama}`), {
+      Iqama: user.Iqama,
       name: user.name,
+      Passport: user.Passport || '',
+      Nationality: user.Nationality || '',
       status: user.status || 'OUT',
       loginTime: user.loginTime || null,
       logoutTime: user.logoutTime || null,

@@ -29,5 +29,8 @@
   "accessHistoryDesc": "سجل كامل لجميع أحداث الدخول والخروج.",
   "timestamp": "الطابع الزمني",
   "eventType": "نوع الحدث",
-  "userId": "المعرف"
+  "userId": "المعرف",
+  "Nationality": "الجنسية",
+  "Passport": "جواز السفر",
+  "searchUploadedUsers": "ابحث في المستخدمين المرفوعين..."
 }

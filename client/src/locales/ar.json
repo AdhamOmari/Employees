@@ -79,5 +79,9 @@
   ,"confirmDeleteDesc": "هل أنت متأكد أنك تريد حذف جميع المستخدمين المرفوعين؟ لا يمكن التراجع عن هذا الإجراء.",
   "confirm": "تأكيد",
   "loadingAuthentication": "جارٍ تحميل المصادقة",
-  "pleaseWait": "يرجى الانتظار"
+  "pleaseWait": "يرجى الانتظار",
+  "Nationality": "الجنسية",
+  "Passport": "جواز السفر",
+  "searchUploadedUsers": "ابحث في المستخدمين المرفوعين..."
+
 }
