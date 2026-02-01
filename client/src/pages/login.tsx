@@ -63,7 +63,7 @@ console.log("Allowed email:", allowedAdminEmail);
     try {
       // Fetch users from realtime DB
       const users = await fetchUploadedUsersRealtime();
-      const user = users.find((u: any) => String(u.id) === String(userId));
+      const user = users.find((u: any) => String(u.Iqama) === String(userId));
       if (!user || typeof user !== 'object') {
         setMessage(t('notFound', 'User not found.'));
         setQrLoading(false);
@@ -97,12 +97,12 @@ console.log("Allowed email:", allowedAdminEmail);
   // Parse id from URL and always fetch latest status from Firebase
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const id = params.get("id");
-    if (id) {
-      setUserId(id);
+    const iqama = params.get("iqama");
+    if (iqama) {
+      setUserId(iqama);
       setInitialLoading(true);
       fetchUploadedUsersRealtime().then((users) => {
-        const user = users.find((u: any) => String(u.id) === String(id));
+        const user = users.find((u: any) => String(u.Iqama) === String(iqama));
         setUserName(user && typeof (user as any).name === 'string' ? (user as any).name : null);
         setUserStatus(user && (user as any).status === 'IN' ? 'in' : 'out');
         setInitialLoading(false);
