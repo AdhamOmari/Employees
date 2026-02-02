@@ -32,17 +32,25 @@ export default function ExcelUpload({ onData }: { onData: (users: UploadedUser[]
   const { t, i18n } = useTranslation();
   const dir = i18n.language === 'ar' ? 'rtl' : 'ltr';
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [errorDialogOpen, setErrorDialogOpen] = useState(false);
+  const [errorMessage, setErrorMessage] = useState({ title: '', description: '' });
 
   const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     setLoading(true);
     
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (!file) {
+      setLoading(false);
+      return;
+    }
     
     const reader = new FileReader();
     reader.onload = async (evt) => {
       const bstr = evt.target?.result;
-      if (!bstr) return;
+      if (!bstr) {
+        setLoading(false);
+        return;
+      }
       
       const wb = XLSX.read(bstr, { type: 'binary' });
       const wsname = wb.SheetNames[0];
@@ -71,6 +79,9 @@ export default function ExcelUpload({ onData }: { onData: (users: UploadedUser[]
       
       const header = data[headerRowIndex];
       
+      // Debug: Log the headers found with their actual types and values
+   
+      
       // Find column indices - check for both Arabic and English headers
       const iqamaIdx = header.findIndex(h => 
         h && typeof h === 'string' && (
@@ -88,12 +99,16 @@ export default function ExcelUpload({ onData }: { onData: (users: UploadedUser[]
         )
       );
       
-      const passportIdx = header.findIndex(h => 
-        h && typeof h === 'string' && (
-          h.toLowerCase().trim() === 'passport' ||
-          h.toLowerCase().trim().includes('passport')
-        )
-      );
+      const passportIdx = header.findIndex(h => {
+        if (!h) return false;
+        const val = String(h).toLowerCase().trim();
+        return val === 'passport' ||
+          val === 'passport number' ||
+          val === 'جواز' || // Arabic "Passport"
+          val === 'جواز السفر' || // Arabic "Passport"
+          val.includes('passport') ||
+          val.includes('جواز');
+      });
       
       const nationalityIdx = header.findIndex(h => 
         h && typeof h === 'string' && (
@@ -103,14 +118,27 @@ export default function ExcelUpload({ onData }: { onData: (users: UploadedUser[]
         )
       );
       
+      // Debug: Log column indices
+
+      
       // Iqama is required
       if (iqamaIdx === -1) {
-        alert(t('missingColumns', 'Excel file must contain "Iqama" column. Found headers: ' + JSON.stringify(header)));
+        setErrorMessage({
+          title: t('missingColumnsTitle', 'Missing Required Column'),
+          description: t('missingIqamaColumn', 'Excel file must contain "Iqama" column. Please check your file and try again.')
+        });
+        setErrorDialogOpen(true);
+        setLoading(false);
         return;
       }
       
       if (nameIdx === -1) {
-        alert(t('missingColumns', 'Excel file must contain "Name" column. Found headers: ' + JSON.stringify(header)));
+        setErrorMessage({
+          title: t('missingColumnsTitle', 'Missing Required Column'),
+          description: t('missingNameColumn', 'Excel file must contain "Name" column. Please check your file and try again.')
+        });
+        setErrorDialogOpen(true);
+        setLoading(false);
         return;
       }
       
@@ -137,6 +165,9 @@ export default function ExcelUpload({ onData }: { onData: (users: UploadedUser[]
           logoutTime: null,
         };
         
+        // Debug: Log first few users to verify data extraction
+  
+        
         // Only add if Iqama is not empty
         if (user.Iqama) {
           users.push(user);
@@ -156,14 +187,26 @@ export default function ExcelUpload({ onData }: { onData: (users: UploadedUser[]
       });
       
       if (duplicates.length > 0) {
-        alert(t('duplicateIqama', `Duplicate Iqama numbers found: ${duplicates.join(', ')}`));
+        setErrorMessage({
+          title: t('duplicateIqamaTitle', 'Duplicate Entries Found'),
+          description: t('duplicateIqama', `The following Iqama numbers appear more than once: ${duplicates.join(', ')}. Please remove duplicates and try again.`)
+        });
+        setErrorDialogOpen(true);
+        setLoading(false);
         return;
       }
       
       if (users.length === 0) {
-        alert(t('noDataFound', 'No valid user data found in the Excel file.'));
+        setErrorMessage({
+          title: t('noDataFoundTitle', 'No Data Found'),
+          description: t('noDataFound', 'No valid user data found in the Excel file. Please check your file format and try again.')
+        });
+        setErrorDialogOpen(true);
+        setLoading(false);
         return;
       }
+      
+ 
       
       setLoading(true);
       try {
@@ -172,14 +215,23 @@ export default function ExcelUpload({ onData }: { onData: (users: UploadedUser[]
         onData(fresh as UploadedUser[]);
       } catch (error) {
         console.error('Upload error:', error);
-        alert(t('uploadError', 'Error uploading data: ' + (error as Error).message));
+        setErrorMessage({
+          title: t('uploadErrorTitle', 'Upload Failed'),
+          description: t('uploadError', 'Error uploading data: ' + (error as Error).message)
+        });
+        setErrorDialogOpen(true);
       } finally {
         setLoading(false);
       }
     };
     reader.onerror = (error) => {
       console.error('File reading error:', error);
-      alert(t('fileReadError', 'Error reading file. Please try again.'));
+      setErrorMessage({
+        title: t('fileReadErrorTitle', 'File Read Error'),
+        description: t('fileReadError', 'Unable to read the file. Please make sure it\'s a valid Excel file and try again.')
+      });
+      setErrorDialogOpen(true);
+      setLoading(false);
     };
     reader.readAsBinaryString(file);
   };
@@ -193,7 +245,11 @@ export default function ExcelUpload({ onData }: { onData: (users: UploadedUser[]
       setConfirmOpen(false);
     } catch (error) {
       console.error('Delete error:', error);
-      alert(t('deleteError', 'Error deleting data. Please try again.'));
+      setErrorMessage({
+        title: t('deleteErrorTitle', 'Delete Failed'),
+        description: t('deleteError', 'Error deleting data. Please try again.')
+      });
+      setErrorDialogOpen(true);
     } finally {
       setDeleteLoading(false);
     }
@@ -278,6 +334,32 @@ export default function ExcelUpload({ onData }: { onData: (users: UploadedUser[]
                 )}
                 <span>{deleteLoading ? t('deleting', 'Deleting...') : t('confirm', 'Yes, Delete')}</span>
               </button>
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Error Dialog */}
+      <AlertDialog open={errorDialogOpen} onOpenChange={setErrorDialogOpen}>
+        <AlertDialogContent dir={dir} className={`${dir === 'rtl' ? 'text-right' : 'text-left'} max-w-md`}>
+          <AlertDialogHeader className={dir === 'rtl' ? 'text-right' : 'text-left'}>
+            <AlertDialogTitle className={`text-red-600 font-semibold text-lg ${dir === 'rtl' ? 'text-right' : 'text-left'}`}>
+              {errorMessage.title}
+            </AlertDialogTitle>
+            <AlertDialogDescription className={`text-zinc-700 mt-3 leading-relaxed ${dir === 'rtl' ? 'text-right' : 'text-left'}`}>
+              {errorMessage.description}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          
+          <AlertDialogFooter 
+            className={`flex gap-2 mt-6 ${dir === 'rtl' ? 'flex-row-reverse' : 'flex-row'}`}
+            dir={dir}
+          >
+            <AlertDialogAction 
+              onClick={() => setErrorDialogOpen(false)}
+              className="px-6 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition-colors"
+            >
+              {t('ok', 'OK')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

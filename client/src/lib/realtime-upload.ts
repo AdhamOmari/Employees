@@ -11,9 +11,12 @@ import { app } from "./firebase";
 const db = getDatabase(app);
 
 export const uploadUsersToRealtimeDB = async (users) => {
+  // Debug: Log what we're about to upload
+
+  
   // Save each user under /uploadedUsers/{Iqama}
-  const promises = users.map((user) =>
-    set(ref(db, `uploadedUsers/${user.Iqama}`), {
+  const promises = users.map((user) => {
+    const userData = {
       Iqama: user.Iqama,
       name: user.name,
       Passport: user.Passport || '',
@@ -21,8 +24,12 @@ export const uploadUsersToRealtimeDB = async (users) => {
       status: user.status || 'OUT',
       loginTime: user.loginTime || null,
       logoutTime: user.logoutTime || null,
-    })
-  );
+    };
+    
+    // Debug: Log each user being saved
+ 
+    return set(ref(db, `uploadedUsers/${user.Iqama}`), userData);
+  });
   await Promise.all(promises);
 };
 

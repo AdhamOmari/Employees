@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, ArrowLeft, Download, Users, Activity, Clock } from "lucide-react";
+import { Search, ArrowLeft, Download, Users, Activity, Clock, QrCode } from "lucide-react";
 import ExcelUpload, { UploadedUser } from '@/components/ui/excel-upload';
 import { fetchUploadedUsersRealtime } from '@/lib/realtime-upload';
 import { useEffect, useRef } from 'react';
@@ -349,7 +349,8 @@ function AdminPage() {
                             {user.logoutTime ? format(new Date(user.logoutTime), 'PPp') : '-'}
                           </TableCell>
                           <TableCell className={dir === 'rtl' ? 'text-left' : 'text-right'}>
-                            <Button size="sm" variant="outline" onClick={() => handleOpenQR(user)}>
+                            <Button size="sm" variant="default" onClick={() => handleOpenQR(user)} className="gap-1.5">
+                              <QrCode className="w-4 h-4" />
                               {t('qr', 'QR')}
                             </Button>
                           </TableCell>
@@ -424,17 +425,19 @@ function AdminPage() {
           </div>
         </div>
                   )}
-          <div className={`flex items-center justify-between ${dir === 'rtl' ? 'flex-row-reverse' : ''}`} dir={dir}>
+          <div className={`flex flex-col gap-2 ${dir === 'rtl' ? 'items-end' : 'items-start'}`} dir={dir}>
             <div className="relative w-72" dir={dir}>
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 w-4 h-4" />
               <Input 
-                placeholder={t('searchEmployees', 'Search employees...')} 
+                placeholder={t('searchEmployees', 'Search by name...')} 
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="pl-9 bg-white border-zinc-200"
               />
             </div>
-            {/* Export Report button removed */}
+            <p className={`text-xs text-zinc-500 px-1 ${dir === 'rtl' ? 'text-right' : 'text-left'}`}>
+              {t('searchHint', 'Search personnel by their name')}
+            </p>
           </div>
 
           <Tabs defaultValue="current" className="w-full">

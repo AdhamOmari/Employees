@@ -33,8 +33,6 @@ export default function LoginPage() {
         return;
       }
       const auth = getAuth(app);
-      console.log("Entered email:", email.trim().toLowerCase());
-console.log("Allowed email:", allowedAdminEmail);
       await signInWithEmailAndPassword(auth, email, password);
       setError("");
       setLocation("/admin");
